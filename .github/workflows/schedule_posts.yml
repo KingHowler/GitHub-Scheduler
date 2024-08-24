@@ -1,0 +1,41 @@
+name: Scheduled Posts
+
+on:
+  schedule:
+    # Run every day at 00:00 UTC
+    - cron: "0 0 * * *"
+
+jobs:
+  move-drafts:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository content
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js environment
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Get today's date
+        id: date
+        run: echo "TODAY=$(date +'%Y-%m-%d')" >> $GITHUB_ENV
+
+      - name: Check for drafts and move to posts
+        run: |
+          today=$TODAY
+          echo "Today is $today"
+          shopt -s nullglob
+          for file in _drafts/${today}-*.md; do
+            echo "Found draft: $file"
+            mv "$file" "_posts/"
+            echo "Moved $file to _posts/"
+          done
+
+      - name: Commit and push changes
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add _posts/
+          git commit -m "Posted Scheduled Drafts on $TODAY" || echo "No changes to commit"
+          git push
