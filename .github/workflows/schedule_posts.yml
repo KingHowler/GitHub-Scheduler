@@ -1,29 +1,32 @@
-name: Scheduled Posts
+name: Publish posts scheduled for today
 
 on:
   schedule:
     # Run every day at 00:00 UTC
     - cron: "0 0 * * *"
+  workflow_dispatch:
 
 jobs:
-  move-drafts:
+  publish_drafts:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository content
+      - name: Checkout main branch
         uses: actions/checkout@v4
+        with:
+          ref: main
 
       - name: Set up Node.js environment
         uses: actions/setup-node@v4
         with:
           node-version: '20'
 
-      - name: Get today's date
+      - name: Get the date for today
         id: date
         run: echo "TODAY=$(date +'%Y-%m-%d')" >> $GITHUB_ENV
 
       - name: Check for drafts and move to posts
         run: |
-          today=$TODAY
+          today=$(date +'%Y-%m-%d')
           echo "Today is $today"
           shopt -s nullglob
           for file in _drafts/${today}-*.md; do
